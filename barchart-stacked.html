@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<head>
+<style>
+	.axis text {
+	  font: 10px sans-serif;
+	}
+
+	.axis path,
+	.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+
+	.x.axis path {
+	  display: none;
+	}
+</style>
+</head>
+<body>
+<script src="d3/d3.min.js" charset = "utf-8"></script>
+<svg/>
+<script>
+	var data = [{letter:'A', valueOne:30, valueTwo:50},
+		{letter:'B', valueOne:18, valueTwo:45},
+		{letter:'C', valueOne:40, valueTwo:70},
+		{letter:'D', valueOne:60, valueTwo:10},
+		{letter:'E', valueOne:50, valueTwo:50},
+		{letter:'F', valueOne:80, valueTwo:13}];
+	
+	var margin = {top:10, bottom: 35, left:35, right:10};
+	var cHeight = 400;
+	var cWidth = 400;
+	
+	var x = d3.scale.ordinal()
+		.rangeRoundBands([0,cWidth],.1);
+		
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient("bottom");
+	
+	var y = d3.scale.linear()
+		.range([cHeight,0]);
+	
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient("left");
+	
+	var color = d3.scale.ordinal()
+		.range(["#98abc5", "#8a89a6"]);
+	
+	var svg = d3.select("svg")
+		.attr("height",cHeight + margin.top + margin.bottom)
+		.attr("width", cWidth + margin.left + margin.right)
+	  .append("g")
+		.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+	
+	color.domain(d3.keys(data[0]).filter(function(key){ return key !== "letter"; }));
+	
+	data.forEach(function(d){
+		var y0 = 0;
+		d.values = color.domain().map(function(name){ return {name:name, y0: y0, y1: y0 += +d[name]};});
+		d.total = d.values[d.values.length -1].y1;
+	});
+	
+	x.domain(data.map(function(d){ return d.letter; }));
+	y.domain([0,d3.max(data,function(d){ return d.total;})]);
+	
+	svg.append("g")
+		.attr("class", "x axis")
+		.attr("transform","translate(0," + cHeight + ")")
+		.call(xAxis);
+		
+	svg.append("g")
+		.attr("class", "y axis")
+		.call(yAxis);
+	
+	var chart = svg.selectAll(".letter")
+		.data(data)
+	  .enter().append("g")
+		.attr("class","g")
+		.attr("transform",function(d){ return "translate(" + x(d.letter) + ",0)";});
+		
+	chart.selectAll("rect")
+		.data(function(d){ return d.values; })
+	  .enter().append("rect")
+		.attr("width", x.rangeBand())
+		.attr("y", function(d){ return y(d.y1); })
+		.attr("height", function(d){ return y(d.y0) - y(d.y1);})
+		.attr("fill", function(d){ return color(d.name); });
+	
+</script>
+</body>
+</html>

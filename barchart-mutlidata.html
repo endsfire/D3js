@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<head>
+<style>
+	.bar {
+	  fill: steelblue;
+	}
+
+	.axis text {
+	  font: 10px sans-serif;
+	}
+
+	.axis path,
+	.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+
+	.x.axis path {
+	  display: none;
+	}
+</style>
+</head>
+<script src="d3/d3.min.js" charset = "utf-8"></script>
+<body>
+	<svg/>
+	<br/>
+	<button onclick="SwapData()">Swap Data</button>
+<script>
+	var dataOne = [{name:'A', value:20},
+		{name:'B', value:60},
+		{name:'C', value:70}];
+	var dataTwo = [{name:'W', value:8},
+		{name:'X', value:3},
+		{name:'Y', value:7},
+		{name:'Z', value:5}];
+	
+	var cHeight = 400;
+	var bWidth = 20;
+	var margin = {top:10,bottom:35,left:35,right:30};
+	var one = true;
+	
+	var svg = d3.select("svg")
+	    .attr("height",cHeight + margin.top + margin.bottom)
+	  .append("g")
+		.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+	
+	var x = d3.scale.ordinal();
+	
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient("bottom");
+	
+	var y = d3.scale.linear()
+		.range([cHeight,0]);
+		
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient("left");
+	
+	svg.append("g")
+		.attr("class","x axis")
+		.attr("transform","translate(0," + cHeight + ")");
+		
+	svg.append("g")
+		.attr("class","y axis");
+	
+	function update(data){
+		d3.select("svg").attr("width",bWidth * data.length + margin.left + margin.right);
+		
+		x.domain(data.map(function(d){ return d.name; }))
+			.rangeRoundBands([0,bWidth * data.length],.1);
+		
+		y.domain([0,d3.max(data,function(d){ return d.value; })]);
+		
+		var chart = svg.selectAll(".bar")
+			.data(data);
+		
+		chart.enter().append("rect")
+			.attr("class","bar")
+			.attr("width", x.rangeBand())
+			.attr("x",function(d){ return x(d.name); })
+			.attr("y",cHeight)
+			.attr("height",0);
+		
+		chart.exit()
+		  .transition()
+			.duration(750)
+				.attr("y", cHeight)
+				.attr("height",0)
+			.remove();
+		
+		chart.transition()
+			.duration(750)
+				.attr("y",function(d){ return y(d.value); })
+				.attr("height", function(d){ return cHeight - y(d.value); });
+		
+		svg.select(".x.axis")
+			.transition()
+			.duration(750)
+			.call(xAxis);
+		
+		svg.select(".y.axis")
+			.transition()
+			.duration(750)
+			.call(yAxis);
+	};
+	
+	update(dataOne);
+	
+	function SwapData(){
+		if(one)
+			update(dataTwo);
+		else
+			update(dataOne);
+			
+		one = !one;
+	};
+	
+</script>
+</body>
+</html>

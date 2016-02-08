@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<style>
+
+	svg rect{
+	  fill: steelblue;
+	}
+
+	.axis text {
+	  font: 10px sans-serif;
+	}
+
+	.axis path,
+	.axis line {
+	  fill: none;
+	  stroke: #000;
+	  shape-rendering: crispEdges;
+	}
+
+	.x.axis path,.y.axis path{
+	  display: none;
+	}
+</style>
+<script src = "d3/d3.min.js" charset = "utf-8"></script>
+<body>
+	<svg/>
+	<br>
+	<button onclick="Swap()">Swap</button>
+	<script>
+		var data = [{name:'A',valueOne:20,valueTwo:3},
+			{name:'B',valueOne:60,valueTwo:1},
+			{name:'C', valueOne:100,valueTwo:5}];
+		var cHeight = 400;
+		var bWidth = 30;
+		var margin = {left: 30, right: 20, bottom: 35, top:10};
+		var valType = 1;
+		
+		var y = d3.scale.linear()
+			.domain([0,d3.max(data,function(d){ return d.valueOne;})])
+			.range([cHeight,0]);
+		
+		var x = d3.scale.ordinal()
+			.domain(data.map(function(d){ return d.name}))
+			.rangeBands([0,bWidth * data.length]);
+		
+		var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom");
+		
+		var yAxis = d3.svg.axis()
+			.scale(y)
+			.orient("left");
+		
+		var svg = d3.select("svg")
+			.attr("width", bWidth * data.length + margin.left + margin.right)
+			.attr("height", cHeight + margin.top + margin.bottom)
+		  .append("g")
+			.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+		
+		svg.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + cHeight +")")
+			.call(xAxis);
+		
+		svg.append("g")
+			.attr("class", "y axis")
+			.call(yAxis);
+		
+		var chart = svg.selectAll("rect")
+			.data(data)
+		  .enter().append("rect")
+			.attr("class","bar")
+			.attr("x", function(d,i){ return bWidth * i;})
+			.attr("y", function(d){ return y(d.valueOne);})
+			.attr("width", bWidth - 1)
+			.attr("height", function(d){ return cHeight - y(d.valueOne);});
+			
+		var Swap = function(){
+			if(valType === 1){
+				y.domain([0,d3.max(data,function(d){ return d.valueTwo;})]);
+				
+				yAxis.scale(y);
+				
+				svg.selectAll(".bar")
+					.transition()
+					.duration(750)
+					.attr("y", function(d){ return y(d.valueTwo);})
+				    .attr("height",function(d){ return cHeight - y(d.valueTwo);});
+				
+				svg.select(".y.axis")
+					.transition()
+					.duration(750)
+					.call(yAxis);
+					
+				valType = 2;
+			}
+			else{
+				y.domain([0,d3.max(data,function(d){ return d.valueOne;})]);
+				
+				yAxis.scale(y);
+				
+				svg.selectAll(".bar")
+					.transition()
+					.duration(750)
+					.attr("y", function(d){ return y(d.valueOne);})
+					.attr("height", function(d){ return cHeight - y(d.valueOne);});
+					
+				svg.select(".y.axis")
+					.transition()
+					.duration(750)
+					.call(yAxis);
+					
+				valType = 1;
+			}
+		};
+		
+	</script>
+</body>
+</html>

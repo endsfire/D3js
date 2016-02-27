@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<head>
+<style>
+	.line{
+		fill:none;
+		stroke: black;
+		stroke-width: .1em;
+	}
+	circle:hover{
+		fill: maroon;
+	}
+	.axis text {
+	  font: 10px sans-serif;
+	}
+
+	.axis line {
+	  fill: none;
+	  stroke: #AAA;
+	  shape-rendering: crispEdges;
+	}
+	.y.axis path,
+	.x.axis path{
+		display: none;
+	}
+</style>
+</head>
+<body>
+<script src = "d3/d3.min.js" charset = "utf-8"></script>
+<svg/>
+<script>
+	var wrdata = [{values:[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,.96,.9615,.9630,.9643,.9655,.9667,.9355,
+	.9375,.9394,.9412,.9429,.9444,.9459,.9474,.9231,.9250,.9024,.9048,.9070,.9091,.9111,.9130,.9149,.9167,.9184,.9200,.9216,.9231,.9057,.9074,.9091,.9107,.9123]},
+	{values:[0,.5,.6667,.75,.80,.8333,.8571,.8750,.7778,.8,.7273,.6667,.6154,.6429,.6,.6250,.5882,.6111,.5789,.6,.5714,.5909,.6087,.5833,.56,.5385,.5556,.5714,.5862,.6,.6129,.6250,.6061,.6176,.6,.5833,.5946,.6053,.5897,
+	.5750,.5854,.5952,.6047,.5909,.5778,.5870,.5745,.5625,.5510,.56,.5686,.5769,.5660,.5556,.5636,.5536,.5439,.5345,.5424]}];
+	var data = [{team:"Golden State Warriors",values:[]},
+		{team:"Atlanta Hawks",values:[]}];
+	var cWidth = 1000;
+	var cHeight = 400;
+	var margin = {top:10,bottom:20,left:35,right:10};
+	
+	var x = d3.scale.linear()
+		.domain([1,d3.max(wrdata,function(d){ return d.values.length; })])
+		.rangeRound([5,cWidth]);
+	
+	var y = d3.scale.linear()
+		.domain([0,1])
+		.range([cHeight,0]);
+	
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.innerTickSize(-cHeight)
+		.orient("bottom");
+	
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.innerTickSize(-cWidth)
+		.tickFormat(d3.format("%"))
+		.orient("left");
+	
+	var line = d3.svg.line()
+		.x(function(d,i){ return x(i+1); })
+		.y(function(d){ return y(d); });
+	
+	var svg = d3.select("svg")
+		.attr("width",cWidth + margin.left + margin.right)
+		.attr("height",cHeight + margin.top + margin.bottom)
+	  .append("g")
+		.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+	
+	svg.append("g")
+		.attr("class","x axis")
+		.attr("transform","translate(0," + cHeight + ")")
+		.call(xAxis)
+	  .append("text")
+		.text("Games")
+		.attr("transform","translate(" + (cWidth-25) + ",-2)");
+	
+	svg.append("g")
+		.attr("class","y axis")
+		.call(yAxis);
+	
+	var teams = svg.selectAll(".team")
+		.data(data)
+	  .enter().append("g")
+		.attr("class",".team");
+	
+	var paths = teams.append("path")
+		.attr("class","line")
+		.attr("d",function(d){ return line(d.values); });
+	
+	tick();
+	
+	function tick(){
+		for(var i = 0; i < wrdata.length; i++)
+			if( wrdata[i].values.length > 0){
+				data[i].values.push(wrdata[i].values[0]);
+				wrdata[i].values.shift();
+				
+				paths.transition()
+					.duration(50)
+					.ease("linear")
+					.attr("d",function(d){ return line(d.values); })
+					.each("end",tick);
+				
+				var circles = teams.selectAll("circle")
+					.data(function(d){ return d.values; });
+					
+				circles.exit().remove();
+				
+				circles.enter().append("circle")
+					.attr("cx",function(d,i){ return x(i+1); })
+					.attr("cy",function(d){ return y(d); })
+					.attr("r",5)
+					.attr("fill","white")
+					.attr("stroke","black")
+					.on("mouseover",function(d){ console.log(d3.select((this).parentNode).data()[0].team); });
+			}
+	};
+	
+	function Show(d,other){
+		console.log(other);
+	};
+	
+</script>
+</body>
+</html>

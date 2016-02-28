@@ -9,10 +9,13 @@
 	circle:hover{
 		fill: maroon;
 	}
-	.axis text {
+	#score{
+		font: 11px sans-serif;
+		font-weight: bold;
+	}
+	.axis text{
 	  font: 10px sans-serif;
 	}
-
 	.axis line {
 	  fill: none;
 	  stroke: #AAA;
@@ -32,14 +35,31 @@
 	.9375,.9394,.9412,.9429,.9444,.9459,.9474,.9231,.9250,.9024,.9048,.9070,.9091,.9111,.9130,.9149,.9167,.9184,.9200,.9216,.9231,.9057,.9074,.9091,.9107,.9123]},
 	{values:[0,.5,.6667,.75,.80,.8333,.8571,.8750,.7778,.8,.7273,.6667,.6154,.6429,.6,.6250,.5882,.6111,.5789,.6,.5714,.5909,.6087,.5833,.56,.5385,.5556,.5714,.5862,.6,.6129,.6250,.6061,.6176,.6,.5833,.5946,.6053,.5897,
 	.5750,.5854,.5952,.6047,.5909,.5778,.5870,.5745,.5625,.5510,.56,.5686,.5769,.5660,.5556,.5636,.5536,.5439,.5345,.5424]}];
+	
+	recordData = [[{sym:"W", ptsT:111, ptsO: 95, rat:1},
+		{sym:"W", ptsT:112, ptsO: 92, rat:1},
+		{sym:"W", ptsT:134, ptsO: 120, rat:1},
+		{sym:"W", ptsT:119, ptsO: 69, rat:1},
+		{sym:"W", ptsT:112, ptsO: 108, rat:1},
+		{sym:"W", ptsT:119, ptsO: 104, rat:1},
+		{sym:"W", ptsT:103, ptsO: 94, rat:1}],
+		[{sym:"L", ptsT:94, ptsO: 106, rat:0},
+		{sym:"W", ptsT:112, ptsO: 101, rat:.5},
+		{sym:"W", ptsT:97, ptsO: 94, rat:.6667},
+		{sym:"W", ptsT:94, ptsO: 92, rat:.75},
+		{sym:"W", ptsT:98, ptsO: 92, rat:.80},
+		{sym:"W", ptsT:101, ptsO: 87, rat:.8333},
+		{sym:"W", ptsT:121, ptsO: 115, rat:.8571}]
+		];
+	
 	var data = [{team:"Golden State Warriors",values:[]},
 		{team:"Atlanta Hawks",values:[]}];
 	var cWidth = 1000;
 	var cHeight = 400;
-	var margin = {top:10,bottom:20,left:35,right:10};
+	var margin = {top:20,bottom:20,left:35,right:170};
 	
 	var x = d3.scale.linear()
-		.domain([1,d3.max(wrdata,function(d){ return d.values.length; })])
+		.domain([1,d3.max(recordData,function(d){ return d.length; })])
 		.rangeRound([5,cWidth]);
 	
 	var y = d3.scale.linear()
@@ -59,7 +79,7 @@
 	
 	var line = d3.svg.line()
 		.x(function(d,i){ return x(i+1); })
-		.y(function(d){ return y(d); });
+		.y(function(d){ return y(d.rat); });
 	
 	var svg = d3.select("svg")
 		.attr("width",cWidth + margin.left + margin.right)
@@ -72,8 +92,8 @@
 		.attr("transform","translate(0," + cHeight + ")")
 		.call(xAxis)
 	  .append("text")
-		.text("Games")
-		.attr("transform","translate(" + (cWidth-25) + ",-2)");
+		.text("# of Games")
+		.attr("transform","translate(" + (cWidth-55) + ",-2)");
 	
 	svg.append("g")
 		.attr("class","y axis")
@@ -88,13 +108,18 @@
 		.attr("class","line")
 		.attr("d",function(d){ return line(d.values); });
 	
+	svg.append("text")
+		.attr("id","score")
+		.text("value")
+		.style("display","none");
+	
 	tick();
 	
 	function tick(){
-		for(var i = 0; i < wrdata.length; i++)
-			if( wrdata[i].values.length > 0){
-				data[i].values.push(wrdata[i].values[0]);
-				wrdata[i].values.shift();
+		for(var i = 0; i < recordData.length; i++)
+			if( recordData[i].length > 0){
+				data[i].values.push(recordData[i][0]);
+				recordData[i].shift();
 				
 				paths.transition()
 					.duration(50)
@@ -109,18 +134,26 @@
 				
 				circles.enter().append("circle")
 					.attr("cx",function(d,i){ return x(i+1); })
-					.attr("cy",function(d){ return y(d); })
+					.attr("cy",function(d){ return y(d.rat); })
 					.attr("r",5)
 					.attr("fill","white")
 					.attr("stroke","black")
-					.on("mouseover",function(d){ console.log(d3.select((this).parentNode).data()[0].team); });
+					.on("mouseover",Score)
+					.on("mouseleave",ScoreH);
 			}
 	};
 	
-	function Show(d,other){
-		console.log(other);
+	function Score(d,i){
+		var cText = d3.select((this).parentNode).data()[0].team + " " + d.sym + " " + d.ptsT + "-" + d.ptsO;
+		svg.select("#score")
+			.text(cText)
+			.attr("transform","translate(" + (x(i+1)-6) + "," + (y(d.rat)-10) + ")")
+			.style("display","inline");
 	};
-	
+	function ScoreH(){
+		svg.select("#score")
+			.style("display","none");
+	};
 </script>
 </body>
 </html>

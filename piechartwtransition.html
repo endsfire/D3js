@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<head>
+<head>
+<body>
+<script src = "d3/d3.min.js" charset = "utf-8"></script>
+<svg/>
+<button onclick="Swap()">Swap</button>
+<script>
+	var data = [{letter:"A",value:4},
+		{letter:"B",value:5},
+		{letter:"C",value:7},
+		{letter:"D",value:2}];
+	var data2 = [{letter:"A",value:6},
+		{letter:"B",value:3},
+		{letter:"C",value:4},
+		{letter:"D",value:8}];
+	var cHeight = 400;
+	var cWidth = 400;
+	var radius = Math.min(cWidth,cHeight)/2;
+	var swap = false;
+	
+	var pie = d3.layout.pie()
+		.sort(null)
+		.value(function(d){ return d.value; });
+	
+	var arc = d3.svg.arc()
+		.innerRadius(radius - 40)
+		.outerRadius(0);
+	
+	var color = d3.scale.ordinal()
+		.range(["#729f98","#283018","#aa863a","#f0eceb"]);
+	
+	var svg = d3.select("svg")
+		.attr("width",cWidth)
+		.attr("height",cHeight)
+	  .append("g")
+		.attr("transform","translate(" + cWidth / 2 + "," + cHeight/2 + ")");
+	
+	var pies = svg.datum(data).selectAll("path")
+		.data(pie)
+	  .enter().append("path")
+		.attr("d",arc)
+		.attr("fill",function(d){ return color(d.data.letter); })
+		.on("mouseover",Visible);
+	
+	function generatePie(dat){
+		pies = pies.data(pie(dat));
+		pies.attr("d",arc);
+	};
+	function Visible(d){
+		console.log((this));
+	};
+	function Swap(){
+		if(!swap)
+			generatePie(data2);
+		else
+			generatePie(data);
+		swap = !swap;
+	};
+</script>
+</body>
+</html>

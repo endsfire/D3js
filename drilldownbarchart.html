@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<head>
+<style>
+	.axis text{
+		font: 10px sans-serif;
+	}
+	.axis line{
+		fill: none;
+		stroke: #000;
+		shape-rendering: crispEdges;
+	}
+	.x.axis path,
+	.y.axis path{
+		display: none;
+	}
+</style>
+</head>
+<body>
+<script src = "d3/d3.min.js" charset = "utf-8"></script>
+<svg/>
+<script>
+	var data = [{group:"A", value:3, drill:[{group:"a",value:6},{group:"A",value:3},{group:"à",value:2}]},
+		{group:"E", value:8, drill:[{group:"e",value:4},{group:"E",value:8},{group:"é",value:4}]},
+		{group:"C", value:4, drill:[{group:"c",value:6},{group:"C",value:4},{group:"ç",value:7}]},
+		{group:"I", value:2, drill:[{group:"i",value:2},{group:"I",value:2},{group:"ï",value:3}]},
+		{group:"O", value:6, drill:[{group:"o",value:9},{group:"O",value:6},{group:"ö",value:7}]}];
+	var margin = {top:10, bottom:35, left:35, right:10};
+	var cWidth = 400;
+	var cHeight = 400;
+	var depth = false;
+	
+	var x = d3.scale.ordinal()
+		.rangeRoundBands([0,cWidth],.1);
+	
+	var y = d3.scale.linear()
+		.range([cHeight,0]);
+	
+	var color = d3.scale.category10();
+	
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient("bottom");
+	
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient("left");
+	
+	var svg = d3.select("svg")
+		.attr("width",cWidth + margin.left + margin.right)
+		.attr("height",cHeight + margin.top + margin.bottom)
+	  .append("g")
+		.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+	
+	svg.append("g")
+		.attr("class","x axis")
+		.attr("transform","translate(0," + cHeight + ")");
+	
+	svg.append("g")
+		.attr("class","y axis");
+	
+	GenerateBars(data);
+	
+	function GenerateBars(groups){
+		x.domain(groups.map(function(d){ return d.group; }));
+		y.domain([0,d3.max(groups,function(d){ return d.value; })]);
+		color.domain(groups.map(function(d){ return d.group; }));
+		
+		var bars = svg.selectAll("rect")
+			.data(groups,function(d){ return d.group; });
+		
+		bars.exit().remove();
+		
+		bars.enter().append("rect")
+			.attr("x",function(d){ return x(d.group); })
+			.attr("width",function(d){ return x.rangeBand() })
+			.attr("y",cHeight)
+			.attr("height",0)
+			.attr("fill","white")
+			.on("click",DrillDown);
+			
+		bars.transition()
+			.duration(1000)
+			.attr("y",function(d){ return y(d.value); })
+			.attr("height",function(d){ return cHeight - y(d.value); })
+			.attr("x",function(d){ return x(d.group); })
+			.attr("width",function(d){ return x.rangeBand() })
+			.attr("fill",function(d){ return color(d.group); });
+		
+		var tAxis = svg.transition().duration(400);
+		
+		tAxis.select(".x.axis")
+			.call(xAxis);
+		
+		tAxis.select(".y.axis")
+			.call(yAxis);
+	};
+	function DrillDown(d){
+		if(!depth){
+			depth = !depth;
+			GenerateBars(d.drill);
+		}
+		else{
+			depth = !depth;
+			GenerateBars(data);
+		}
+	};
+</script>
+</body>
+</html>

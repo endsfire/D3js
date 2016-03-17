@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<head>
+<style>
+	.axis text{
+		font: 10px sans-serif;
+	}
+	.axis line{
+		fill: none;
+		stroke: #000;
+		shape-rendering: crispEdges;
+	}
+	.x.axis path,
+	.y.axis path{
+		display: none;
+	}
+</style>
+</head>
+<body>
+<script src = "d3/d3.min.js" charset = "utf-8"></script>
+<svg/>
+<script>
+	var data = [{group:"A",value:7, segments:{X:4,Y:2,Z:1}},
+		{group:"B",value:8, segments:{X:3,Y:3,Z:2}},
+		{group:"C",value:10, segments:{X:5,Y:2,Z:3}},
+		{group:"D",value:9, segments:{X:6,Y:3,Z:0}},
+		{group:"E",value:12, segments:{X:4,Y:4,Z:4}}];
+	var margin = {top: 10, bottom: 35, left: 35, right:10};
+	var cWidth = 500;
+	var cHeight = 400;
+	
+	var x0 = d3.scale.ordinal()
+		.rangeRoundBands([0,cWidth],.1);
+	
+	var x1 = d3.scale.ordinal();
+	
+	var y = d3.scale.linear()
+		.range([cHeight,0]);
+	
+	var color = d3.scale.category10();
+	
+	var xAxis = d3.svg.axis()
+		.scale(x0)
+		.orient("bottom");
+	
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient("left");
+	
+	var segmentKeys = d3.keys(data[0].segments);
+	
+	var colors = data.map(function(d){ return d.group; });
+	
+	for(var i in segmentKeys)
+		colors.push(segmentKeys[i]);
+	
+	color.domain(colors);
+	
+	x0.domain(data.map(function(d){ return d.group; }));
+	x1.domain(segmentKeys).rangeRoundBands([0,x0.rangeBand()]);
+	y.domain([0,d3.max(data,function(d){ return d.value; })]);
+	
+	var svg = d3.select("svg")
+		.attr("width",cWidth + margin.left + margin.right)
+		.attr("height",cHeight + margin.top + margin.bottom)
+	  .append("g")
+		.attr("transform","translate(" + margin.left + "," + margin.top + ")");
+	
+	svg.append("g")
+		.attr("class","x axis")
+		.attr("transform","translate(0," + cHeight + ")")
+		.call(xAxis);
+	
+	svg.append("g")
+		.attr("class","y axis")
+		.call(yAxis);
+	
+	var groups = svg.selectAll(".groups")
+		.data(data)
+	  .enter().append("g")
+		.attr("class","groups")
+		.attr("transform",function(d){ return "translate(" + x0(d.group) + ",0)"; });
+	
+	data.forEach(function(d){
+		d.vals = [{group: d.group, val: d.value}];
+	});
+	
+	GenerateBars();
+	
+	function GenerateBars(){
+		
+		var bars = groups.selectAll("rect")
+			.data(function(d){ return d.vals; },function(d){ return d.group });
+		
+		var exitTransition = d3.transition().duration(500).each(function(){ 
+			bars.exit()
+			  .transition()
+				.attr("y",cHeight)
+				.attr("height",0)
+				.remove(); 
+		});
+		
+		var enterTransition = exitTransition.transition().duration(50).each(function(){
+			bars.enter().append("rect")
+				.attr("x",function(d){ 
+					if(segmentKeys.findIndex(function(key){ return d.group === key; }) === -1)
+						return x1(segmentKeys[0]);
+					else
+						return x1(d.group);
+				})
+				.attr("width",function(d){
+					if(segmentKeys.findIndex(function(key){ return d.group === key; }) === -1)
+						return x1.rangeBand()*3;
+					else
+						return x1.rangeBand();
+				})
+				.attr("y",cHeight)
+				.attr("height",0)
+				.attr("fill",function(d){ return color(d.group);})
+				.on("click",ChangeDepth);
+		});
+		
+		var updateTransition = enterTransition.transition().duration(500).each(function(){
+			bars.transition()
+				.attr("x",function(d){ 
+					if(segmentKeys.findIndex(function(key){ return d.group === key; }) === -1)
+							return x1(segmentKeys[0]);
+					else
+						return x1(d.group);
+				})
+				.attr("width",function(d){
+					if(segmentKeys.findIndex(function(key){ return d.group === key; }) === -1)
+						return x1.rangeBand()*3;
+					else
+						return x1.rangeBand();
+				})
+				.attr("y",function(d){ return y(d.val);})
+				.attr("height",function(d){ return cHeight - y(d.val); })
+				.attr("fill",function(d){ return color(d.group); });
+		});
+		
+	};
+	function ChangeDepth(d){
+		var index = data.findIndex(function(key){ return key.group === d.group; });
+		if(index !== -1)
+			data[index].vals = segmentKeys.map(function(name){ return {group:name, val: +data[index].segments[name]}; });
+		else{
+			var g = (this).parentNode.__data__.group;
+			index = data.findIndex(function(key){ return key.group === g; });
+			data[index].vals = [{group: data[index].group, val: data[index].value}];
+		}	
+		GenerateBars();
+	};
+	if (!Array.prototype.findIndex) {
+		Array.prototype.findIndex = function(obj, start) {
+			 for (var i = (start || 0), j = this.length; i < j; i++) {
+				 if (this[i] === obj) { return i; }
+			 }
+			 return -1;
+		}
+	};
+</script>
+</body>
+</html>

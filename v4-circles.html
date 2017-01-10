@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+circle{
+	fill: steelblue;
+}
+</style>
+<button type = "button" onclick="ChangeData()">Randomize</button>
+<br>
+<svg/>
+<script src = "d3/4.4.1/d3.min.js" charset = "utf-8"></script>
+<script>
+
+var data = [32, 57, 293];
+
+var svg = d3.select("svg")
+	.attr("width",300)
+	.attr("height",300);
+
+GenerateCircles();
+	
+function GenerateCircles(){
+	
+	var circle = svg.selectAll("circle")
+		.data(data);
+
+	circle.exit().remove();
+	
+	circle.enter().append("circle")
+		.attr("cy",60)
+		.attr("cx", function(d,i){ return i * 100 + 30; })
+		.attr("r", function(d){ return Math.sqrt(d); });
+		
+	circle.attr("r", function(d){ return Math.sqrt(d); });
+
+}
+
+function ChangeData(){
+	for(var i = 0; i < data.length; i++){
+		data[i] = Math.random() * 300;
+		console.log(data[i]);
+	}
+	GenerateCircles();
+}	
+</script>
